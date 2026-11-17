@@ -80,6 +80,9 @@ async function main(): Promise<void> {
     await postRegister(base, port);
     await pollDone(base);
     // The run is over: stop accepting, let in-flight requests drain, then exit 0.
+    // closeAllConnections first: close() alone waits for idle keep-alive sockets
+    // (the suite leaves one open), which would hold the process past the drain.
+    server.closeAllConnections();
     await new Promise<void>((resolve) => {
       server.close(() => resolve());
       setTimeout(resolve, 1000);
